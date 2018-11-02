@@ -26,6 +26,14 @@ class XeroApi {
     return this._headers
   }
 
+  set projectId(projectId) {
+    this._projectId = projectId
+  }
+
+  get projectId() {
+    return this._projectId
+  }
+
   get options() {
     return Object.assign({ headers: this._headers }, this._defaultOpts)
   }
@@ -65,26 +73,63 @@ class XeroApi {
     });
   }
 
-  getProjectExpenses(projectId) {
-    let options = Object.assign({}, this.options, {
-      uri: `${this.projectApi}/api/projects/${projectId}/expenses?includeSummary=true`,
-    });
+  getProjectExpenses() {
+    return new Promise((resolve, reject) => {
+      if(!this.projectId) {
+        return reject('you need to set a project id');
+      }
 
-    return request(options).then((data) => {
-      const result = JSON.parse(data);
-      return result;
-    });
+      let options = Object.assign({}, this.options, {
+        uri: `${this.projectApi}/api/projects/${this.projectId}/expenses?includeSummary=true`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
   }
 
-  getInvoices() {
-    let options = Object.assign({}, this.options, {
-      uri: `${this.apiUrl}/apiv2/SourceDocuments/GetAll?direction=forward&excludeNewExpenses=false&includeVoidDeleted=true&pagesize=200&type=INVOICETYPE%2FACCPAY`,
-    });
+  async getAllInvoices() {
+    var list = [];
+    var version = '';
+    var i = 0;
+    
+    do {
+      var data = await new Promise((resolve, reject) => {
+        let options = Object.assign({}, this.options, {
+          uri: `${this.apiUrl}/apiv2/SourceDocuments/GetAll`,
+          qs: {
+            direction: 'forward',
+            excludeNewExpenses: 'false',
+            includeVoidDeleted: 'true',
+            pagesize: '200',
+            type: 'INVOICETYPE/ACCPAY',
+            version: version
+          }
+        });
 
-    return request(options).then((data) => {
-      const result = JSON.parse(data);
-      return result;
-    });
+        request(options).then((data) => {
+          const result = JSON.parse(data);
+
+          if(result.invoices.length === 200) {
+            version = result.maxTimestampForPage;
+          } else {
+            i++;
+          }
+
+          return resolve(result.invoices);
+        }).catch((err) => {
+          return reject(err);
+        });
+      })
+
+      var list = list.concat(data);
+    } while (i < 1);
+
+    return list;
   }
 }
 
