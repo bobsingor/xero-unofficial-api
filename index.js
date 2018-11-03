@@ -73,14 +73,14 @@ class XeroApi {
     });
   }
 
-  getProjectExpenses() {
+  getProjectExpenses(projectId) {
     return new Promise((resolve, reject) => {
-      if(!this.projectId) {
+      if(!projectId) {
         return reject('you need to set a project id');
       }
 
       let options = Object.assign({}, this.options, {
-        uri: `${this.projectApi}/api/projects/${this.projectId}/expenses?includeSummary=true`,
+        uri: `${this.projectApi}/api/projects/${projectId}/expenses?includeSummary=true`,
       });
 
       request(options).then((data) => {
@@ -93,12 +93,12 @@ class XeroApi {
   }
 
   async getAllInvoices() {
-    var list = [];
-    var version = '';
-    var i = 0;
-    
+    let list = [];
+    let version = '';
+    let i = 0;
+
     do {
-      var data = await new Promise((resolve, reject) => {
+      const data = await new Promise((resolve, reject) => {
         let options = Object.assign({}, this.options, {
           uri: `${this.apiUrl}/apiv2/SourceDocuments/GetAll`,
           qs: {
@@ -126,7 +126,7 @@ class XeroApi {
         });
       })
 
-      var list = list.concat(data);
+      list = list.concat(data);
     } while (i < 1);
 
     return list;
