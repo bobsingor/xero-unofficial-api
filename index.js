@@ -92,6 +92,47 @@ class XeroApi {
     })
   }
 
+  getDashboard() {
+    return new Promise((resolve, reject) => {
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Dashboard/getDashboard`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
+  getStatementLines(bankAccountId) {
+    return new Promise((resolve, reject) => {
+      if(!bankAccountId) {
+        return reject('you need to set a bank account id');
+      }
+
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Bank/getStatementLines`,
+        qs: {
+          bankaccountID: bankAccountId,
+          limit: 500,
+          page: 1,
+          start: 0,
+          status: 'reconsiled'
+        }
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
   async getAllInvoices() {
     let list = [];
     let version = '';
