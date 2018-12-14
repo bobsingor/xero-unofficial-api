@@ -107,6 +107,21 @@ class XeroApi {
     })
   }
 
+  getContacts() {
+    return new Promise((resolve, reject) => {
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/contacts/contactsforofflinesync?pageSize=500`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
   getStatementLines(bankAccountId) {
     return new Promise((resolve, reject) => {
       if(!bankAccountId) {
