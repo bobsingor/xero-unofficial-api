@@ -1,4 +1,7 @@
 let request = require('request-promise');
+const Contact = require('./classes/user');
+const Invoice = require('./classes/invoice');
+const { GraphQLClient } = require('graphql-request')
 
 class XeroApi {
   constructor(username, password) {
@@ -61,6 +64,142 @@ class XeroApi {
       return result;
     });
   }
+
+  getOrganisations() {
+    return new Promise((resolve, reject) => {
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Organisations?includeAllOrganisations=true&page=1&pageSize=10`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
+  getCutDownReferenceData() {
+    return new Promise((resolve, reject) => {
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Dashboard/getCutDownReferenceData?includeAccounts=true&includeBankAccounts=false&includeContacts=false&includeDashboard=false`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
+  getAccounts() {
+    return new Promise((resolve, reject) => {
+      const endpoint = `${this.apiUrl}/apiv2/graphql`
+      const headers = {
+        headers: this.headers,
+      }
+
+      const graphQLClient = new GraphQLClient(endpoint, headers)
+
+      const query = /* GraphQL */ `
+        query Accounts($orgId: String) {
+          accounts: accounts(orgId: $orgId) {
+            accountID,
+            code,
+            name,
+            status,
+            taxType,
+            class,
+            enablePaymentsToAccount,
+            showInExpenseClaims,
+            hasAttachments,
+            updatedDateUTC,
+            bankAccountNumber,
+            bankAccountType,
+            currencyCode,
+            systemAccount
+          }
+        }
+      `
+
+      const variables = {
+        orgId: headers.headers.organisationid
+      }
+
+      graphQLClient.request(query, variables).then((data) => {
+        return resolve(data);
+      }).catch((err) => {
+        return reject(err);
+      })
+    })
+  }
+
+  createContact(contactData, postAddress, phone) {
+    return new Promise((resolve, reject) => {
+      let contact = new Contact(contactData);
+      contact.setPostAddress(postAddress);
+      contact.setDefaultPhone(phone);
+
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Contacts/saveContact`,
+        method: 'POST',
+        form: contact
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
+  getNextInvoiceNumber() {
+    return new Promise((resolve, reject) => {
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Invoices/getNextInvoiceNumber`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
+  createInvoice(invoiceData, lineItems) {
+    return new Promise(async (resolve, reject) => {
+      const invoiceNumber = await this.getNextInvoiceNumber();
+      const defaultData = await this.getCutDownReferenceData();
+
+      const invoice = new Invoice(invoiceNumber.invoiceNumber, defaultData, invoiceData);
+
+      lineItems.forEach((lineItem) => {
+        invoice.addLineItem(lineItem)
+      })
+
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Invoices/saveInvoiceAsApproved`,
+        method: 'POST',
+        form: invoice.invoice
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
  
   getProjects() {
     let options = Object.assign({}, this.options, {
@@ -104,6 +243,18 @@ class XeroApi {
       }).catch((err) => {
         return reject(err);
       });
+    })
+  }
+
+  getContactByEmail(emailAddress) {
+    return new Promise((resolve, reject) => {
+      this.getContacts().then((data) => {
+        var object = data.contacts.find((object) => {
+          return object.emailAddress === emailAddress
+        })
+
+        return resolve(object);
+      })
     })
   }
 
