@@ -1,12 +1,13 @@
 {
   "name": "xero-unofficial-api",
   "description": "",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "dependencies": {
     "graphql-request": "^1.8.2",
     "moment": "^2.24.0",
     "request": "^2.88.0",
-    "request-promise": "^4.2.2"
+    "request-promise": "^4.2.2",
+    "uuid": "^3.3.2"
   },
   "repository": {
     "type": "git",

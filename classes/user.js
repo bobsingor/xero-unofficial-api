@@ -113,6 +113,7 @@ class Contact {
     this.contact.addresses[0].addressLine2 = address.addressLine2 || null
     this.contact.addresses[0].addressLine3 = address.addressLine3 || null
     this.contact.addresses[0].addressLine4 = address.addressLine4 || null
+    this.contact.addresses[0].postCode = address.postCode || null
     this.contact.addresses[0].city = address.city || null
     this.contact.addresses[0].region = address.region || null
     this.contact.addresses[0].countryCode = address.countryCode || null
