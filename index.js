@@ -174,6 +174,54 @@ class XeroApi {
     })
   }
 
+  getInvoiceEmail(invoiceId) {
+    return new Promise(async (resolve, reject) => {
+      const defaultData = await this.getCutDownReferenceData();
+      const emailTemplate = defaultData.emailTemplates.find((x) => { return x.type === 'EMAILTYPE/INVOICE'});
+
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Invoices/getInvoiceEmail?emailTemplateID=${emailTemplate.id}&invoiceID=${invoiceId}`,
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
+  sendInvoice(email) {
+    return new Promise(async (resolve, reject) => {
+      const defaultData = await this.getCutDownReferenceData();
+      const emailTemplate = defaultData.emailTemplates.find((x) => { return x.type === 'EMAILTYPE/INVOICE'});
+
+      email.cc = true;
+      email.includePDF = true;
+      email.includeFiles = true;
+      email.emailTemplateId = emailTemplate.id;
+      email.x2x = false;
+      
+      delete email.canXero2Xero;
+      delete email.id;
+
+      let options = Object.assign({}, this.options, {
+        uri: `${this.apiUrl}/apiv2/Invoices/sendInvoice`,
+        method: 'POST',
+        form: email
+      });
+
+      request(options).then((data) => {
+        const result = JSON.parse(data);
+
+        return resolve(result);
+      }).catch((err) => {
+        return reject(err);
+      });
+    })
+  }
+
   createInvoice(invoiceData, lineItems) {
     return new Promise(async (resolve, reject) => {
       const invoiceNumber = await this.getNextInvoiceNumber();
