@@ -6,6 +6,11 @@ class Invoice {
     const id = uuidv4().toUpperCase();
     const currentDate = moment().startOf('day').format('YYYY-MM-DDTHH:mm:ss.SSSSSSS');
 
+    const currencyName = invoice.currencyName || defaultData.currencies[0].name;
+    const currency = defaultData.currencies.find((object) => {
+      return object.name === currencyName
+    });
+
     this.defaultData = defaultData;
 
     this.invoice = {
@@ -14,8 +19,8 @@ class Invoice {
       "id": invoice.id || id,
       "displayDate": invoice.displayDate || currentDate,
       "invoiceNumber": invoiceNumber,
-      "currency": invoice.currency || defaultData.currencies[0].id,
-      "currencyName": invoice.currencyName || defaultData.currencies[0].name,
+      "currency": currency.id,
+      "currencyName": currency.name,
       "credited": null,
       "due": null,
       "newinvoice": false,
