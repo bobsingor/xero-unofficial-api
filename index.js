@@ -174,10 +174,10 @@ class XeroApi {
     })
   }
 
-  getInvoiceEmail(invoiceId) {
+  getInvoiceEmail(invoiceId, defaultTemplate = true) {
     return new Promise(async (resolve, reject) => {
       const defaultData = await this.getCutDownReferenceData();
-      const emailTemplate = defaultData.emailTemplates.find((x) => { return x.type === 'EMAILTYPE/INVOICE'});
+      const emailTemplate = defaultData.emailTemplates.find((x) => { return x.type === 'EMAILTYPE/INVOICE' && x.defaultTemplate === defaultTemplate});
 
       let options = Object.assign({}, this.options, {
         uri: `${this.apiUrl}/apiv2/Invoices/getInvoiceEmail?emailTemplateID=${emailTemplate.id}&invoiceID=${invoiceId}`,
@@ -202,7 +202,7 @@ class XeroApi {
       email.includeFiles = true;
       email.emailTemplateId = emailTemplate.id;
       email.x2x = false;
-      
+
       delete email.canXero2Xero;
       delete email.id;
 
@@ -298,7 +298,7 @@ class XeroApi {
     return new Promise((resolve, reject) => {
       this.getContacts().then((data) => {
         var object = data.contacts.find((object) => {
-          return object.emailAddress === emailAddress
+          return object.emailAddress && object.emailAddress.toLowerCase() === emailAddress.toLowerCase()
         })
 
         return resolve(object);
@@ -309,7 +309,7 @@ class XeroApi {
   getContacts() {
     return new Promise((resolve, reject) => {
       let options = Object.assign({}, this.options, {
-        uri: `${this.apiUrl}/apiv2/contacts/contactsforofflinesync?pageSize=500`,
+        uri: `${this.apiUrl}/apiv2/contacts/contactsforofflinesync?pageSize=3000`,
       });
 
       request(options).then((data) => {
