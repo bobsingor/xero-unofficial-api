@@ -197,7 +197,7 @@ class XeroApi {
       const defaultData = await this.getCutDownReferenceData();
       const emailTemplate = defaultData.emailTemplates.find((x) => { return x.type === 'EMAILTYPE/INVOICE'});
 
-      email.cc = true;
+      email.cc = false;
       email.includePDF = true;
       email.includeFiles = true;
       email.emailTemplateId = emailTemplate.id;
